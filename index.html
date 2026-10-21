@@ -1,1 +1,81 @@
+<!DOCTYPE html>
 
+<html lang="nl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Mijn Werkplanning 🚛</title>
+
+<style>
+
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:18px;color:#111827}
+
+h1{font-size:32px;margin:5px 0 20px}
+
+button,input{font-size:18px;padding:14px;border-radius:12px;border:0}
+
+button{font-weight:bold;background:#2563eb;color:white;margin:4px}
+
+input{width:100%;box-sizing:border-box;border:1px solid #ddd;background:white}
+
+.next{background:#111827;color:white;padding:22px;border-radius:20px;margin-bottom:20px}
+
+.next h2{font-size:30px;margin:8px 0}
+
+.card{background:white;padding:18px;border-radius:18px;margin:12px 0;box-shadow:0 2px 8px #0001}
+
+.card.done{opacity:.5}
+
+.route{font-size:21px;margin:10px 0}
+
+.info{color:#64748b;font-size:17px}
+
+.green{background:#16a34a}
+
+.red{background:#dc2626}
+
+textarea{width:100%;height:180px;font-size:17px;padding:12px;box-sizing:border-box;border-radius:12px;border:1px solid #ddd}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>🚛 Mijn Werkplanning</h1>
+
+<input type="date" id="date">
+
+<div id="next"></div>
+
+<div id="rides"></div>
+
+<button onclick="addRide()">＋ Nieuwe rit</button>
+
+<button onclick="pastePlanning()">📋 Planning plakken</button>
+
+<script>
+
+let data=JSON.parse(localStorage.getItem("werkplanning")||"{}");
+
+let date=document.getElementById("date");
+
+function today(){
+
+ let d=new Date();
+
+ return d.toISOString().split("T")[0];
+
+}
+
+date.value=today();
+
+date.onchange=show;
+
+function rides(){
+
+ return data[date.value]||[];
