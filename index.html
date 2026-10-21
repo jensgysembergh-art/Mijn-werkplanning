@@ -1,81 +1,546 @@
 <!DOCTYPE html>
-
 <html lang="nl">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mijn Werkplanning 🚛</title>
 
 <style>
+*{box-sizing:border-box}
 
-body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:18px;color:#111827}
+body{
+  font-family:Arial,sans-serif;
+  background:#eef2f7;
+  margin:0;
+  padding:16px;
+  color:#111827;
+}
 
-h1{font-size:32px;margin:5px 0 20px}
+h1{
+  font-size:32px;
+  margin:5px 0 16px;
+}
 
-button,input{font-size:18px;padding:14px;border-radius:12px;border:0}
+.date{
+  width:100%;
+  padding:16px;
+  font-size:20px;
+  border:1px solid #ccc;
+  border-radius:14px;
+  background:white;
+  margin-bottom:14px;
+}
 
-button{font-weight:bold;background:#2563eb;color:white;margin:4px}
+button{
+  border:0;
+  border-radius:14px;
+  padding:15px 18px;
+  font-size:18px;
+  font-weight:bold;
+  margin:4px 2px;
+  background:#2563eb;
+  color:white;
+}
 
-input{width:100%;box-sizing:border-box;border:1px solid #ddd;background:white}
+.bigbuttons{
+  display:flex;
+  gap:8px;
+  margin-bottom:16px;
+}
 
-.next{background:#111827;color:white;padding:22px;border-radius:20px;margin-bottom:20px}
-
-.next h2{font-size:30px;margin:8px 0}
-
-.card{background:white;padding:18px;border-radius:18px;margin:12px 0;box-shadow:0 2px 8px #0001}
-
-.card.done{opacity:.5}
-
-.route{font-size:21px;margin:10px 0}
-
-.info{color:#64748b;font-size:17px}
+.bigbuttons button{
+  flex:1;
+  min-height:64px;
+}
 
 .green{background:#16a34a}
-
 .red{background:#dc2626}
+.gray{background:#64748b}
 
-textarea{width:100%;height:180px;font-size:17px;padding:12px;box-sizing:border-box;border-radius:12px;border:1px solid #ddd}
+.next{
+  background:#111827;
+  color:white;
+  padding:22px;
+  border-radius:20px;
+  margin-bottom:18px;
+}
 
+.next small{
+  font-size:15px;
+  font-weight:bold;
+}
+
+.next h2{
+  font-size:30px;
+  margin:8px 0;
+}
+
+.route{
+  font-size:21px;
+  margin:10px 0;
+  font-weight:bold;
+}
+
+.card{
+  background:white;
+  padding:18px;
+  border-radius:18px;
+  margin:12px 0;
+  box-shadow:0 2px 8px #0001;
+}
+
+.card.done{
+  opacity:.5;
+}
+
+.info{
+  color:#475569;
+  font-size:17px;
+  line-height:1.5;
+  margin:10px 0;
+}
+
+.form{
+  background:white;
+  padding:18px;
+  border-radius:18px;
+  margin-bottom:18px;
+  box-shadow:0 2px 8px #0001;
+}
+
+.form h2{
+  margin-top:0;
+}
+
+label{
+  display:block;
+  font-weight:bold;
+  font-size:17px;
+  margin-top:12px;
+  margin-bottom:5px;
+}
+
+input,textarea{
+  width:100%;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  padding:14px;
+  font-size:18px;
+  background:white;
+}
+
+textarea{
+  min-height:220px;
+  resize:vertical;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+}
+
+.row>div{
+  flex:1;
+}
+
+.status{
+  background:#dcfce7;
+  color:#166534;
+  padding:12px;
+  border-radius:12px;
+  margin:10px 0;
+  font-weight:bold;
+}
 </style>
-
 </head>
 
 <body>
 
 <h1>🚛 Mijn Werkplanning</h1>
 
-<input type="date" id="date">
+<input class="date" type="date" id="date">
+
+<div class="bigbuttons">
+  <button onclick="showAdd()">＋ Nieuwe rit</button>
+  <button onclick="showImport()">📋 Planning<br>toevoegen</button>
+</div>
+
+<div id="formArea"></div>
 
 <div id="next"></div>
 
 <div id="rides"></div>
 
-<button onclick="addRide()">＋ Nieuwe rit</button>
-
-<button onclick="pastePlanning()">📋 Planning plakken</button>
-
 <script>
 
-let data=JSON.parse(localStorage.getItem("werkplanning")||"{}");
+let data = JSON.parse(localStorage.getItem("werkplanning") || "{}");
 
-let date=document.getElementById("date");
+const dateInput = document.getElementById("date");
 
 function today(){
-
- let d=new Date();
-
- return d.toISOString().split("T")[0];
-
+  let d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 
-date.value=today();
+dateInput.value = today();
 
-date.onchange=show;
+dateInput.onchange = show;
 
 function rides(){
+  return data[dateInput.value] || [];
+}
 
- return data[date.value]||[];
+function save(r){
+  data[dateInput.value] = r;
+  localStorage.setItem("werkplanning",JSON.stringify(data));
+  show();
+}
+
+function showAdd(){
+  document.getElementById("formArea").innerHTML = `
+    <div class="form">
+      <h2>➕ Nieuwe rit</h2>
+
+      <label>Vertrekplaats</label>
+      <input id="fFrom" placeholder="Bijvoorbeeld: Holcim Dinant">
+
+      <label>Aankomstplaats</label>
+      <input id="fTo" placeholder="Bijvoorbeeld: Pêche Villers-le-Bouillet">
+
+      <label>Goederen / opdracht</label>
+      <input id="fCargo" placeholder="Bijvoorbeeld: Graviers 8/22">
+
+      <label>Extra informatie</label>
+      <input id="fNote" placeholder="Bijvoorbeeld: Compte pêche">
+
+      <div class="row">
+        <div>
+          <label>Vertrek</label>
+          <input id="fStart" type="time">
+        </div>
+
+        <div>
+          <label>Aankomst</label>
+          <input id="fEnd" type="time">
+        </div>
+      </div>
+
+      <br>
+
+      <button class="green" onclick="saveNewRide()">💾 Rit opslaan</button>
+      <button class="gray" onclick="closeForm()">Annuleren</button>
+    </div>
+  `;
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function saveNewRide(){
+
+  let r = rides();
+
+  r.push({
+    from:document.getElementById("fFrom").value,
+    to:document.getElementById("fTo").value,
+    cargo:document.getElementById("fCargo").value,
+    note:document.getElementById("fNote").value,
+    start:document.getElementById("fStart").value,
+    end:document.getElementById("fEnd").value,
+    done:false
+  });
+
+  document.getElementById("formArea").innerHTML =
+    `<div class="status">✅ Rit toegevoegd!</div>`;
+
+  save(r);
+}
+
+function showImport(){
+
+  document.getElementById("formArea").innerHTML = `
+    <div class="form">
+      <h2>📋 Planning toevoegen</h2>
+
+      <p>Plak hier de planning die je van je planner krijgt.</p>
+
+      <textarea id="planningText"
+      placeholder="Plak hier bijvoorbeeld:
+
+Bonjour Jens voici ton planning de demain...
+
+1) Enlèvement:
+Adresse : Holcim...
+...
+
+2) Yvoir vinalmont 6/10
+3) Yvoir vinalmont 6/10
+4) on fait le point"></textarea>
+
+      <br>
+
+      <button class="green" onclick="importPlanning()">📥 Planning toevoegen</button>
+      <button class="gray" onclick="closeForm()">Annuleren</button>
+    </div>
+  `;
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function importPlanning(){
+
+  let text = document.getElementById("planningText").value;
+
+  if(!text.trim()){
+    alert("Plak eerst je planning.");
+    return;
+  }
+
+  let r = rides();
+  let aantal = 0;
+
+  /* RIT 1 - Holcim */
+  if(/Holcim/i.test(text)){
+
+    let fromMatch = text.match(/Adresse\s*:\s*(Holcim[^]*?5500\s+Dinant)/i);
+
+    let toMatch = text.match(/Adresse\s*:\s*(Peche[^]*?4530\s+Villers-le-Bouillet)/i);
+
+    let cargoMatch = text.match(/Marchandises\s*:\s*Vrac,\s*([^,\n]+)/i);
+
+    let compteMatch = text.match(/Compte\s*:\s*([^\n]+)/i);
+
+    let refMatch = text.match(/Référence\s*:\s*([0-9]+)/i);
+
+    r.push({
+      from:fromMatch ? fromMatch[1].trim() : "Holcim, Dinant",
+      to:toMatch ? toMatch[1].trim() : "Peche, Villers-le-Bouillet",
+      cargo:cargoMatch ? cargoMatch[1].trim() : "Graviers 8/22",
+      note:
+        (compteMatch ? "Compte: "+compteMatch[1].trim()+" " : "") +
+        (refMatch ? "Référence: "+refMatch[1].trim() : ""),
+      start:"",
+      end:"",
+      done:false
+    });
+
+    aantal++;
+  }
+
+  /* Yvoir → Vinalmont */
+  let yvoirMatches = text.match(/Yvoir\s+vinalmont\s+([0-9/]+)/gi);
+
+  if(yvoirMatches){
+
+    yvoirMatches.forEach(function(item){
+
+      let match = item.match(/Yvoir\s+vinalmont\s+([0-9/]+)/i);
+
+      r.push({
+        from:"Yvoir",
+        to:"Vinalmont",
+        cargo:match ? match[1] : "",
+        note:"",
+        start:"",
+        end:"",
+        done:false
+      });
+
+      aantal++;
+    });
+  }
+
+  /* On fait le point */
+  if(/on fait le point/i.test(text)){
+
+    r.push({
+      from:"",
+      to:"",
+      cargo:"On fait le point",
+      note:"",
+      start:"",
+      end:"",
+      done:false
+    });
+
+    aantal++;
+  }
+
+  data[dateInput.value] = r;
+
+  localStorage.setItem("werkplanning",JSON.stringify(data));
+
+  document.getElementById("formArea").innerHTML =
+    `<div class="status">✅ ${aantal} rit(ten) toegevoegd aan je planning!</div>`;
+
+  show();
+}
+
+function closeForm(){
+  document.getElementById("formArea").innerHTML="";
+}
+
+function finish(i){
+
+  let r = rides();
+
+  r[i].done = !r[i].done;
+
+  save(r);
+}
+
+function removeRide(i){
+
+  if(confirm("Deze rit verwijderen?")){
+
+    let r = rides();
+
+    r.splice(i,1);
+
+    save(r);
+  }
+}
+
+function editRide(i){
+
+  let r = rides();
+  let x = r[i];
+
+  document.getElementById("formArea").innerHTML = `
+    <div class="form">
+
+      <h2>✏️ Rit aanpassen</h2>
+
+      <label>Vertrekplaats</label>
+      <input id="eFrom" value="${escapeHtml(x.from || "")}">
+
+      <label>Aankomstplaats</label>
+      <input id="eTo" value="${escapeHtml(x.to || "")}">
+
+      <label>Goederen / opdracht</label>
+      <input id="eCargo" value="${escapeHtml(x.cargo || "")}">
+
+      <label>Extra informatie</label>
+      <input id="eNote" value="${escapeHtml(x.note || "")}">
+
+      <div class="row">
+
+        <div>
+          <label>Vertrek</label>
+          <input id="eStart" type="time" value="${x.start || ""}">
+        </div>
+
+        <div>
+          <label>Aankomst</label>
+          <input id="eEnd" type="time" value="${x.end || ""}">
+        </div>
+
+      </div>
+
+      <br>
+
+      <button class="green" onclick="saveEdit(${i})">💾 Opslaan</button>
+      <button class="gray" onclick="closeForm()">Annuleren</button>
+
+    </div>
+  `;
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function saveEdit(i){
+
+  let r = rides();
+
+  r[i].from = document.getElementById("eFrom").value;
+  r[i].to = document.getElementById("eTo").value;
+  r[i].cargo = document.getElementById("eCargo").value;
+  r[i].note = document.getElementById("eNote").value;
+  r[i].start = document.getElementById("eStart").value;
+  r[i].end = document.getElementById("eEnd").value;
+
+  save(r);
+
+  document.getElementById("formArea").innerHTML =
+    `<div class="status">✅ Rit aangepast!</div>`;
+}
+
+function escapeHtml(text){
+
+  return text
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+function show(){
+
+  let r = rides();
+
+  let next = r.find(x => !x.done);
+
+  document.getElementById("next").innerHTML = next ?
+
+  `<div class="next">
+    <small>🚛 VOLGENDE RIT</small>
+    <h2>${next.start || "Uur nog niet ingevuld"}</h2>
+
+    <div class="route">
+      ${next.from || "Vertrek"} → ${next.to || "Aankomst"}
+    </div>
+
+    <div>${next.cargo || ""}</div>
+
+    ${next.note ? `<div>${next.note}</div>` : ""}
+  </div>`
+
+  :
+
+  `<div class="next">
+    <small>PLANNING</small>
+    <h2>Alle ritten klaar 🎉</h2>
+  </div>`;
+
+  document.getElementById("rides").innerHTML = r.map((x,i) => `
+
+    <div class="card ${x.done ? "done" : ""}">
+
+      <b>RIT ${i+1}</b>
+
+      <div class="route">
+        ${x.from || "—"} → ${x.to || "—"}
+      </div>
+
+      <div class="info">
+
+        📦 ${x.cargo || "Geen opdracht"}<br>
+
+        ${x.note ? "ℹ️ "+x.note+"<br>" : ""}
+
+        ⏰ ${x.start || "—"} → ${x.end || "—"}
+
+      </div>
+
+      <button class="green" onclick="finish(${i})">
+        ${x.done ? "↩ Herstellen" : "✓ Rit klaar"}
+      </button>
+
+      <button onclick="editRide(${i})">
+        ✏️ Bewerken
+      </button>
+
+      <button class="red" onclick="removeRide(${i})">
+        🗑 Verwijderen
+      </button>
+
+    </div>
+
+  `).join("");
+}
+
+show();
+
+</script>
+
+</body>
+</html>
